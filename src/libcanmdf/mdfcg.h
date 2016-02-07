@@ -29,26 +29,26 @@ extern "C" {
 
 /* find time channel of channel group */
 cn_block_t *
-find_time_channel(mdf_t *mdf, cg_block_t *cg_block);
+find_time_channel(const mdf_t *const mdf, const cg_block_t *const cg_block);
 
 /* loop over all channel groups */
 void
-mdfProcessChannelGroupsUnsorted(const mdf_t *const mdf,
-				const filter_t *const filter,
-				const link_t cglink,
-				const uint16_t number_record_ids,
-				const uint8_t *const data_base,
-				mdfSignalCb_t const mdfSignalCb,
-				const void *const cbData);
+mdfProcessChannelGroupsUnsorted   (const mdf_t *const mdf,
+                                   const filter_t *const filter,
+                                   const link_t cglink,
+                                   const uint16_t number_record_ids,
+                                   const uint8_t *const data_base,
+                                   mdfSignalCb_t const mdfSignalCb,
+                                   const void *const cbData);
 
 void
-mdfProcessChannelGroupsSorted(const mdf_t *const mdf,
-			      const filter_t *const filter,
-			      link_t link,
-			      uint16_t number_record_ids,
-			      uint8_t *data,
-			      mdfSignalCb_t const mdfSignalCb,
-			      const void *const cbData);
+mdfProcessChannelGroupsSorted     (const mdf_t *const mdf,
+                                   const filter_t *const filter,
+                                   link_t link,
+                                   uint16_t number_record_ids,
+                                   uint8_t *data,
+                                   mdfSignalCb_t const mdfSignalCb,
+                                   const void *const cbData);
 
 #ifdef __cplusplus
 }

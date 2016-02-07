@@ -25,9 +25,10 @@
 extern "C" {
 #endif
 
-void mdfProcessDataGroups(const mdf_t *const mdf, const filter_t *const filter,
-			  link_t link, mdfSignalCb_t const mdfSignalCb,
-			  const void *const cbData);
+void 
+mdfProcessDataGroups   (const mdf_t *const mdf, const filter_t *const filter,
+                        link_t link, mdfSignalCb_t const mdfSignalCb,
+                        const void *const cbData);
 
 #ifdef __cplusplus
 }

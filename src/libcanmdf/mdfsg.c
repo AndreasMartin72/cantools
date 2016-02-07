@@ -25,34 +25,33 @@
 #include "mdfsg.h"
 #include "mdfmodel.h"
 
+
 /* convert signal to double value */
 double
 mdf_signal_convert(const uint8_t *const data_int_ptr,
                    const mdf_t *const mdf,
                    const cn_block_t *const cn_block)
 {
-  /* position of LSB within first byte: 0..7 */
-  uint8_t bit_offset = cn_block->first_bit%8;
-  cc_block_t *cc_block = cc_block_get(mdf,
-                                      cn_block->link_conversion_formula);
+  /* decode */
+  uint8_t number_bits  = cn_block->number_bits;
+  uint8_t bit_offset   = cn_block->first_bit % 8;    /* LSB */
+  uint8_t number_bytes = ( bit_offset + number_bits + 7 ) / 8;
+  uint8_t group_bytes  = number_bytes <= 2 ? number_bytes : ( number_bytes <= 4 ? 4 : 8 );
+  uint16_t default_byte_order_big_endian = id_block_get(mdf)->byte_order; /* 0==Intel, other=Motorola*/
+  cc_block_t *cc_block = cc_block_get(mdf, cn_block->link_conversion_formula);
   double converted_double;
   int64_t data_int64;
   double data_ieee754;
-  uint16_t number_bits = cn_block->number_bits;
-  uint16_t number_of_signal_bytes = (bit_offset + number_bits + 7)/8;
-  uint16_t default_byte_order_big_endian = id_block_get(mdf)->byte_order;
-  const sdt = cn_block->signal_data_type;
-  const int cn_is_big_endian =
-       (sdt == sdt_unsigned_int_big_endian)
-    || (sdt == sdt_signed_int_big_endian)
-    || (sdt == sdt_ieee754_float_big_endian)
-    || (sdt == sdt_ieee754_double_big_endian)
-    || (default_byte_order_big_endian &&
-        (   (sdt == sdt_unsigned_int_default)
-         || (sdt == sdt_signed_int_default)
-         || (sdt == sdt_ieee754_float_default)
-         || (sdt == sdt_ieee754_double_default)));
- 
+  const int sdt = cn_block->signal_data_type;
+  const int cn_is_big_endian =     (sdt == sdt_unsigned_int_big_endian)
+                                || (sdt == sdt_signed_int_big_endian)
+                                || (sdt == sdt_ieee754_float_big_endian)
+                                || (sdt == sdt_ieee754_double_big_endian)
+                                || (default_byte_order_big_endian &&
+                                   (   (sdt == sdt_unsigned_int_default)
+                                    || (sdt == sdt_signed_int_default)
+                                    || (sdt == sdt_ieee754_float_default)
+                                    || (sdt == sdt_ieee754_double_default)));
   /* swap words if channel endianess differs from machine endianess */
 #ifdef WORDS_BIGENDIAN
   const int swap = !cn_is_big_endian;
@@ -60,75 +59,129 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
   const int swap = cn_is_big_endian;
 #endif
 
+  uint8_t buffer[8];
+  const uint8_t* data_ptr = data_int_ptr;
+
+  if(cn_is_big_endian)
+  {
+    for( int i = 0; i < number_bytes; i++ )
+    {
+      buffer[group_bytes-i-1] = data_ptr[number_bytes-i-1];
+    }
+  }
+  else
+  {
+    for( int i = 0; i < number_bytes; i++ )
+    {
+      buffer[i] = data_ptr[i];
+    }
+  }
+
+  if(swap)
+  {
+    for( int i = 0; i < group_bytes/2; i++ )
+    {
+        buffer[i] = buffer[group_bytes-i-1];
+    }
+  }
+          
+  data_ptr = buffer;
+
   /* extract data */
-  switch(sdt) {
-  case sdt_signed_int_default:
-  case sdt_signed_int_big_endian:
-  case sdt_signed_int_little_endian:
-    /* a signed signal should have 2 bits or more */
-    assert(number_bits >= 2);
-    /* FALLTHROUGH (to decode signal) */
-  case sdt_unsigned_int_default:
-  case sdt_unsigned_int_big_endian:
-  case sdt_unsigned_int_little_endian:
-    /* copy and swap bytes if required */
-    {
-      uint8_t *dp = (uint8_t *)&data_int64;
-      const uint8_t *sp;
-      uint8_t i = number_of_signal_bytes;
-      
-      if(swap) {
-        for(sp = &data_int_ptr[number_of_signal_bytes-1]; i>0; i--) {
-          *dp++ = *sp--;
+  switch(sdt) 
+  {
+    case sdt_unsigned_int_default:
+    case sdt_unsigned_int_big_endian:
+    case sdt_unsigned_int_little_endian:
+      if(number_bytes == 1) 
+      {
+        data_int64 = ((*(uint8_t*)data_ptr) >> bit_offset);
+        data_int64 &= (1u << number_bits) - 1u;
+      } 
+      else if(number_bytes == 2) 
+      {
+        data_int64  = ((*(uint16_t*)data_ptr) >> bit_offset);
+        data_int64 &= (1u << number_bits) - 1u;
+      } 
+      else if(number_bytes == 4) 
+      {
+        data_int64  = ((*(uint32_t*)data_ptr) >> bit_offset);
+        data_int64 &= (1u << number_bits) - 1u;
+      } 
+      else {
+        assert(bit_offset + number_bits <= 64);
+        data_int64 = (*(uint64_t*)data_ptr) >> bit_offset;
+
+        if(number_bits < 64) 
+        {
+          data_int64 &= ((uint64_t)1 << number_bits) - 1u;
         }
-      } else {
-        for(sp = data_int_ptr; i>0; i--) {
-          *dp++ = *sp++;
-        }
       }
-    }
+      break;
+    case sdt_signed_int_default:
+    case sdt_signed_int_big_endian:
+    case sdt_signed_int_little_endian:
+      assert(number_bits >= 2);
+      if(number_bytes == 1) 
+      {
+        uint8_t data_u8;
 
-    /* shift result */
-    if(bit_offset > 0) {
-      data_int64 >>= bit_offset;
-    }
+        data_u8 = *(uint8_t*)data_ptr;
+        data_u8 <<= 8 - number_bits - bit_offset;
+        data_int64 = (int64_t)((*(int8_t*)&data_u8) >> (8-number_bits));
+      } 
+      else if(number_bytes == 2) 
+      {
+        uint16_t data_u16;
 
-    /* mask result */
-    if(number_bits < 64) {
-      data_int64 &= ((1ULL<<number_bits)-1ULL);
-    }
-    break;
-  case sdt_ieee754_float_default:
-  case sdt_ieee754_float_big_endian:
-  case sdt_ieee754_float_little_endian:
-    {
-      uint32_t data_u32 = *(uint32_t *)data_int_ptr;
+        data_u16 = *(uint16_t*)data_ptr;
+        data_u16 <<= 16 - number_bits - bit_offset;
+        data_int64 = (int64_t)((*(int16_t*)&data_u16) >> (16-number_bits));
+      } 
+      else if(number_bytes == 4) 
+      {
+        uint32_t data_u32;
 
-      if(swap) {
-         data_u32 = bswap_32(*(uint32_t *)&data_u32);
+        data_u32 = *(uint32_t*)data_ptr;
+        data_u32 <<= 32 - number_bits - bit_offset;
+        data_int64 = (int64_t)((*(int32_t*)&data_u32) >> (32-number_bits));
+      } 
+      else 
+      {
+        uint64_t data_u64;
+
+        assert(bit_offset + number_bits <= 64);
+
+        data_u64 = *(uint64_t*)data_ptr;
+        data_u64 <<= 64 - number_bits - bit_offset;
+        data_int64 = (int64_t)((*(int64_t*)&data_u64) >> (64-number_bits));
       }
-      data_ieee754 = *(float *)&data_u32;
-    }
-    break;
-  case sdt_ieee754_double_default:
-  case sdt_ieee754_double_big_endian:
-  case sdt_ieee754_double_little_endian:
-    {
-      uint64_t data_u64 = *(uint64_t *)data_int_ptr;
-
-      if(swap) {
-         data_u64 = bswap_64(*(uint64_t *)&data_u64);
+      break;
+    case sdt_ieee754_float_default:
+    case sdt_ieee754_float_big_endian:
+    case sdt_ieee754_float_little_endian:
+      {
+        uint32_t data_u32 = *(uint32_t*)data_ptr;
+        data_ieee754 = *(float *)&data_u32;
+        assert( number_bits = 32 && bit_offset == 0 );
       }
-      data_ieee754 = *(double *)&data_u64;
-    }
-    break;
-  case sdt_string: /* string type not yet implemented */
-    data_int64 = 0;
-    break;
-  default:
-    fprintf(stderr,"signal_data_type %hu not implemented\n",
-            (unsigned short)sdt);
-    exit(EXIT_FAILURE);
+      break;
+    case sdt_ieee754_double_default:
+    case sdt_ieee754_double_big_endian:
+    case sdt_ieee754_double_little_endian:
+      {
+        uint64_t data_u64 = *(uint64_t*)data_ptr;
+        data_ieee754 = *(double *)&data_u64;
+        assert( number_bits = 64 && bit_offset == 0 );
+      }
+      break;
+    case sdt_string: /* string */
+      data_int64 = 0;
+      break;
+    default:
+	  mdf_fprintf(stderr,"signal_data_type %hu not implemented\n",
+	              (unsigned short)sdt);
+      exit(EXIT_FAILURE);
   }
 
   /* convert data */
@@ -171,8 +224,8 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
       break;
     default:
       converted_double = 0.0;
-      fprintf(stderr,"conversion %hu not implemented\n",
-              (unsigned short)cc_block->conversion_type);
+      mdf_fprintf(stderr,"conversion %hu not implemented\n",
+                  (unsigned short)cc_block->conversion_type);
       exit(EXIT_FAILURE);
     }
   } else {

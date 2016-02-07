@@ -23,8 +23,8 @@
 extern "C" {
 #endif
 
-const mdf_t *mdf_attach(char *filename, int verbose_flag);
-void mdf_detach(const mdf_t *const mdf);
+const   mdf_t*  mdf_attach  (const char *filename, int verbose_flag);
+        void    mdf_detach  (const mdf_t *const mdf);
 
 #ifdef __cplusplus
 }

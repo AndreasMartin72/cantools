@@ -16,6 +16,13 @@
 
 #include "config.h"
 
+#ifndef __GNUC__
+  #include <io.h>
+#else
+  #define _open open
+#endif
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -26,35 +33,46 @@
 #include "mdffile.h"
 
 const mdf_t *
-mdf_attach(char *filename, int verbose_level)
+mdf_attach(const char *filename, int verbose_level)
 {
-  CREATE(mdf_t, mdf);
+  MDF_CREATE(mdf_t, mdf);
 
-  mdf->verbose_level = verbose_level;
+  if( mdf )
+  {
+    mdf->verbose_level = verbose_level;
+    mdf->corrupt = 0;
 
-  /* open input file */
-  mdf->fd = open(filename, O_RDONLY);
-  if(mdf->fd != -1) {
-    struct stat sb;
+    /* open input file */
+    mdf->fd = _open(filename, O_RDONLY);
+    if(mdf->fd != -1) {
+      struct stat sb;
 
-    fstat(mdf->fd, &sb);
-    mdf->size = sb.st_size;
-    mdf->base = mmap(NULL, mdf->size, PROT_READ,
-                     MAP_PRIVATE, mdf->fd, (off_t)0);
-    if(mdf->base == MAP_FAILED) {
-      fprintf(stderr, "mdf_attach(): can't mmap MDF file %s\n",filename);
+      fstat(mdf->fd, &sb);
+      mdf->size = sb.st_size;
+      mdf->base = (uint8_t*)mmap(NULL, mdf->size, PROT_READ,
+                                 MAP_PRIVATE, mdf->fd, (off_t)0);
+      if(mdf->base == MAP_FAILED) {
+        mdf_fprintf(stderr, "mdf_attach(): can't mmap MDF file %s\n",filename);
+        MDF_FREE(mdf);
+        mdf = NULL;
+      }
+    } else {
+      mdf_fprintf(stderr, "mdf_attach(): can't open MDF file %s\n",filename);
+      MDF_FREE(mdf);
       mdf = NULL;
     }
-  } else {
-    fprintf(stderr, "mdf_attach(): can't open MDF file %s\n",filename);
-    mdf = NULL;
   }
+
   return mdf;
 }
 
 void
-mdf_detach(const mdf_t *const mdf)
+mdf_detach(mdf_t ** mdf)
 {
-  munmap(mdf->base, mdf->size);
-  close(mdf->fd);
+  if( mdf && *mdf)
+  {
+    munmap((*mdf)->base, (*mdf)->size);
+    close((*mdf)->fd);
+    MDF_FREE(*mdf);
+  }
 }

@@ -23,8 +23,8 @@
 
 void
 mdfProcessDataGroups(const mdf_t *const mdf, const filter_t *const filter,
-		     link_t lnk, mdfSignalCb_t const mdfSignalCb,
-		     const void *const cbData)
+                     link_t lnk, mdfSignalCb_t const mdfSignalCb,
+                     const void *const cbData)
 {
   dg_block_t *dg_block;
   dr_block_t *dr_block;
@@ -35,11 +35,11 @@ mdfProcessDataGroups(const mdf_t *const mdf, const filter_t *const filter,
        dg_block;
        dg_block = dg_block_get(mdf, dg_block->link_next_dg_block), idg++) {
     if(mdf->verbose_level >= 2) {
-      printf("DGBLOCK %d, nCG = %hu, nRec = %hu, offset=0x%lx\n",
-	     idg,
-	     (unsigned short)dg_block->number_channel_groups,
-	     (unsigned short)dg_block->number_record_ids,
-	     (unsigned long)dg_block->link_dr_block );
+      mdf_printf("DGBLOCK %d, nCG = %hu, nRec = %hu, offset=0x%lx\n",
+             idg,
+             (unsigned short)dg_block->number_channel_groups,
+             (unsigned short)dg_block->number_record_ids,
+             (unsigned long)dg_block->link_dr_block );
     }
     dr_block = dr_block_get(mdf, dg_block->link_dr_block);
     data = dr_block;
@@ -47,18 +47,18 @@ mdfProcessDataGroups(const mdf_t *const mdf, const filter_t *const filter,
     switch(dg_block->number_record_ids) {
     case 0: /* sorted records */
       mdfProcessChannelGroupsSorted(mdf, filter, dg_block->link_cg_block,
-				    dg_block->number_record_ids, data,
-				    mdfSignalCb, cbData);
+                                    dg_block->number_record_ids, data,
+                                    mdfSignalCb, cbData);
       break;
     case 1: /* unsorted records */
     case 2:
       mdfProcessChannelGroupsUnsorted(mdf, filter, dg_block->link_cg_block,
-				      dg_block->number_record_ids, data,
-				      mdfSignalCb, cbData);
+                                      dg_block->number_record_ids, data,
+                                      mdfSignalCb, cbData);
       break;
     default:
-      fprintf(stderr,"number_record_ids %hu not implemented\n",
-	      (unsigned short)dg_block->number_record_ids);
+      mdf_fprintf(stderr,"number_record_ids %hu not implemented\n",
+              (unsigned short)dg_block->number_record_ids);
       exit(EXIT_FAILURE);
     }
   }

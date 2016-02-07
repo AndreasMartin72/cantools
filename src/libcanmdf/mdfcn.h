@@ -24,23 +24,23 @@
 #include "mdfsg.h"
 
 void
-mdfProcessChannel(const mdf_t *const mdf,
-		  const cg_block_t *const cg_block,
-		  const cn_block_t *const cn_block,
-		  const filter_t *const filter,
-		  const double *const time,
-		  const double *const value,
-		  mdfSignalCb_t const mdfSignalCb,
-		  const void *const cbData);
+mdfProcessChannel         (const mdf_t *const mdf,
+                           const cg_block_t *const cg_block,
+                           const cn_block_t *const cn_block,
+                           const filter_t *const filter,
+                           const double *const time,
+                           const double *const value,
+                           mdfSignalCb_t const mdfSignalCb,
+                           const void *const cbData);
 void
-mdfProcessChannelsSorted(const mdf_t *const mdf,
-			 const filter_t *const filter,
-			 link_t link,
-			 uint32_t number_of_records,
-			 uint16_t number_record_ids,
-			 uint16_t record_size,
-			 uint8_t *data_base,
-			 mdfSignalCb_t const mdfSignalCb,
-			 const void *const cbData);
+mdfProcessChannelsSorted  (const mdf_t *const mdf,
+                           const filter_t *const filter,
+                           link_t link,
+                           uint32_t number_of_records,
+                           uint16_t number_record_ids,
+                           uint16_t record_size,
+                           uint8_t *data_base,
+                           mdfSignalCb_t const mdfSignalCb,
+                           const void *const cbData);
 
 #endif

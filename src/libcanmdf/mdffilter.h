@@ -45,16 +45,17 @@ extern "C" {
 #endif
 
 extern char *
-filter_apply(const filter_t *filter, const uint32_t channel,
-	     const char *message, const char *signal);
+filter_apply                (const filter_t *filter, const uint32_t channel,
+                             const char *message, const char *signal);
 extern int
-filter_test_channel_group(const mdf_t *const mdf,
-			  const filter_t *const filter,
-			  const cg_block_t *const cg_block);
+filter_test_channel_group   (const mdf_t *const mdf,
+                             const filter_t *const filter,
+                             const cg_block_t *const cg_block);
 extern filter_t *
-mdf_filter_create(const char *filename);
+mdf_filter_create           (const char *filename);
+
 extern void
-filter_free(filter_t *filter);
+filter_free                 (filter_t *filter);
 
 #ifdef __cplusplus
 }

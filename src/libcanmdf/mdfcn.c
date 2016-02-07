@@ -43,7 +43,7 @@ mdfProcessChannel(const mdf_t *const mdf,
   const size_t nbytes = sizeof(double)*cg_block->number_of_records;
 
   if(cg_block->number_of_records > 0) {
-    timeValue = (double *)malloc(
+    timeValue = (double *)mdf_malloc(
          2 * (size_t)cg_block->number_of_records * sizeof(double));
     memcpy(timeValue, time,  nbytes);
     memcpy(&timeValue[cg_block->number_of_records], value, nbytes);
@@ -56,7 +56,7 @@ mdfProcessChannel(const mdf_t *const mdf,
   ce_get_message_info(ce_block, &message, &can_id, &can_channel);
   
   if(mdf->verbose_level >= 2) {
-    printf("name=%s, records = %lu, ID=0x%lx, can_ch=%lu, message=%s\n",
+    mdf_printf("name=%s, records = %lu, ID=0x%lx, can_ch=%lu, message=%s\n",
            signal_name,
            (unsigned long)cg_block->number_of_records,
            (unsigned long)can_id, 
@@ -69,8 +69,9 @@ mdfProcessChannel(const mdf_t *const mdf,
               cn_block->channel_type, message, signal_name,
               timeValue, filter, cbData);
 
-  free(signal_name);
-  free(timeValue);
+  mdf_free(message);
+  mdf_free(signal_name);
+  mdf_free(timeValue);
 }
 
 void
@@ -99,7 +100,7 @@ mdfProcessChannelsSorted(const mdf_t *const mdf,
   dims[1] = 2;
 
   if(number_of_records > 0) {
-    timeValue = (double *)malloc(sizeof(double)*2*number_of_records);
+    timeValue = (double *)mdf_malloc(sizeof(double)*2*number_of_records);
   } else {
     timeValue = NULL;
   }
@@ -114,7 +115,11 @@ mdfProcessChannelsSorted(const mdf_t *const mdf,
       char *signal_name = cn_get_long_name(mdf, cn_block);
 
       /* check channel type */
-      if(cn_block->channel_type != (uint32_t)i_channel_type) continue;
+      if(cn_block->channel_type != (uint32_t)i_channel_type) 
+      {
+        mdf_free( signal_name );
+        continue;
+      }
 
       /* target array */
       targetArray = (i_channel_type == 1)
@@ -141,8 +146,7 @@ mdfProcessChannelsSorted(const mdf_t *const mdf,
         data_int_ptr = &data[offset];
 
         /* convert and store value */
-        *targetArray = mdf_signal_convert(data_int_ptr, mdf, cn_block);
-        targetArray++;
+        *targetArray++ = mdf_signal_convert(data_int_ptr, mdf, cn_block);
 
         /* next data record */
         data += record_size;
@@ -162,9 +166,9 @@ mdfProcessChannelsSorted(const mdf_t *const mdf,
                   filter,
                   cbData);
 
-      free(message);
-      free(signal_name);
+      mdf_free(message);
+      mdf_free(signal_name);
     }
   }
-  free(timeValue);
+  mdf_free(timeValue);
 }
