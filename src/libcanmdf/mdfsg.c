@@ -33,15 +33,16 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
                    const cn_block_t *const cn_block)
 {
   /* decode */
-  uint8_t number_bits  = cn_block->number_bits;
-  uint8_t bit_offset   = cn_block->first_bit % 8;    /* LSB */
-  uint8_t number_bytes = ( bit_offset + number_bits + 7 ) / 8;
-  uint8_t group_bytes  = number_bytes <= 2 ? number_bytes : ( number_bytes <= 4 ? 4 : 8 );
-  uint16_t default_byte_order_big_endian = id_block_get(mdf)->byte_order; /* 0==Intel, other=Motorola*/
-  cc_block_t *cc_block = cc_block_get(mdf, cn_block->link_conversion_formula);
-  double converted_double;
-  int64_t data_int64;
-  double data_ieee754;
+  cc_block_t* cc_block      = cc_block_get(mdf, cn_block->link_conversion_formula);
+  uint8_t     bit_offset    = cn_block->first_bit % 8;    /* LSB */
+  uint8_t     number_bits   = cn_block->number_bits;
+  uint16_t 	  number_bytes  = ( bit_offset + number_bits + 7 ) / 8;
+  uint8_t     group_bytes   = number_bytes <= 2 ? number_bytes : ( number_bytes <= 4 ? 4 : 8 );
+  uint16_t    default_byte_order_big_endian = id_block_get(mdf)->byte_order; /* 0==Intel, other=Motorola*/
+  double      converted_double;
+  int64_t     data_int64;
+  double      data_ieee754;
+
   const int sdt = cn_block->signal_data_type;
   const int cn_is_big_endian =     (sdt == sdt_unsigned_int_big_endian)
                                 || (sdt == sdt_signed_int_big_endian)
@@ -52,37 +53,16 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
                                     || (sdt == sdt_signed_int_default)
                                     || (sdt == sdt_ieee754_float_default)
                                     || (sdt == sdt_ieee754_double_default)));
-  /* swap words if channel endianess differs from machine endianess */
+
+
+  /* Resolve alignment, copy data from LSB to MSB into endian depending format */
+  for( int i = 0; i < number_bytes; i++ )
+  {
 #ifdef WORDS_BIGENDIAN
-  const int swap = !cn_is_big_endian;
+      buffer[group_bytes-i-1] = cn_is_big_endian ? data_ptr[number_bytes-i-1] : data_ptr[i];
 #else
-  const int swap = cn_is_big_endian;
+      buffer[i] = cn_is_big_endian ? data_ptr[number_bytes-i-1] : data_ptr[i];
 #endif
-
-  uint8_t buffer[8];
-  const uint8_t* data_ptr = data_int_ptr;
-
-  if(cn_is_big_endian)
-  {
-    for( int i = 0; i < number_bytes; i++ )
-    {
-      buffer[group_bytes-i-1] = data_ptr[number_bytes-i-1];
-    }
-  }
-  else
-  {
-    for( int i = 0; i < number_bytes; i++ )
-    {
-      buffer[i] = data_ptr[i];
-    }
-  }
-
-  if(swap)
-  {
-    for( int i = 0; i < group_bytes/2; i++ )
-    {
-        buffer[i] = buffer[group_bytes-i-1];
-    }
   }
           
   data_ptr = buffer;
