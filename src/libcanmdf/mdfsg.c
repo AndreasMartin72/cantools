@@ -35,13 +35,14 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
   /* decode */
   cc_block_t* cc_block      = cc_block_get(mdf, cn_block->link_conversion_formula);
   uint8_t     bit_offset    = cn_block->first_bit % 8;    /* LSB */
-  uint8_t     number_bits   = cn_block->number_bits;
+  uint16_t    number_bits   = cn_block->number_bits;
   uint16_t 	  number_bytes  = ( bit_offset + number_bits + 7 ) / 8;
   uint8_t     group_bytes   = number_bytes <= 2 ? number_bytes : ( number_bytes <= 4 ? 4 : 8 );
   uint16_t    default_byte_order_big_endian = id_block_get(mdf)->byte_order; /* 0==Intel, other=Motorola*/
   double      converted_double;
   int64_t     data_int64;
   double      data_ieee754;
+  uint8_t     buffer[8];
 
   const int sdt = cn_block->signal_data_type;
   const int cn_is_big_endian =     (sdt == sdt_unsigned_int_big_endian)
@@ -59,13 +60,12 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
   for( int i = 0; i < number_bytes; i++ )
   {
 #ifdef WORDS_BIGENDIAN
-      buffer[group_bytes-i-1] = cn_is_big_endian ? data_ptr[number_bytes-i-1] : data_ptr[i];
+      buffer[group_bytes-i-1] = cn_is_big_endian ? data_int_ptr[number_bytes-i-1] : data_int_ptr[i];
 #else
-      buffer[i] = cn_is_big_endian ? data_ptr[number_bytes-i-1] : data_ptr[i];
+      buffer[i] = cn_is_big_endian ? data_int_ptr[number_bytes-i-1] : data_int_ptr[i];
 #endif
   }
           
-  data_ptr = buffer;
 
   /* extract data */
   switch(sdt) 
@@ -75,22 +75,22 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
     case sdt_unsigned_int_little_endian:
       if(number_bytes == 1) 
       {
-        data_int64 = ((*(uint8_t*)data_ptr) >> bit_offset);
+        data_int64 = ((*(uint8_t*)buffer) >> bit_offset);
         data_int64 &= (1u << number_bits) - 1u;
       } 
       else if(number_bytes == 2) 
       {
-        data_int64  = ((*(uint16_t*)data_ptr) >> bit_offset);
+        data_int64  = ((*(uint16_t*)buffer) >> bit_offset);
         data_int64 &= (1u << number_bits) - 1u;
       } 
       else if(number_bytes == 4) 
       {
-        data_int64  = ((*(uint32_t*)data_ptr) >> bit_offset);
+        data_int64  = ((*(uint32_t*)buffer) >> bit_offset);
         data_int64 &= (1u << number_bits) - 1u;
       } 
       else {
         assert(bit_offset + number_bits <= 64);
-        data_int64 = (*(uint64_t*)data_ptr) >> bit_offset;
+        data_int64 = (*(uint64_t*)buffer) >> bit_offset;
 
         if(number_bits < 64) 
         {
@@ -106,7 +106,7 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
       {
         uint8_t data_u8;
 
-        data_u8 = *(uint8_t*)data_ptr;
+        data_u8 = *(uint8_t*)buffer;
         data_u8 <<= 8 - number_bits - bit_offset;
         data_int64 = (int64_t)((*(int8_t*)&data_u8) >> (8-number_bits));
       } 
@@ -114,7 +114,7 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
       {
         uint16_t data_u16;
 
-        data_u16 = *(uint16_t*)data_ptr;
+        data_u16 = *(uint16_t*)buffer;
         data_u16 <<= 16 - number_bits - bit_offset;
         data_int64 = (int64_t)((*(int16_t*)&data_u16) >> (16-number_bits));
       } 
@@ -122,7 +122,7 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
       {
         uint32_t data_u32;
 
-        data_u32 = *(uint32_t*)data_ptr;
+        data_u32 = *(uint32_t*)buffer;
         data_u32 <<= 32 - number_bits - bit_offset;
         data_int64 = (int64_t)((*(int32_t*)&data_u32) >> (32-number_bits));
       } 
@@ -132,7 +132,7 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
 
         assert(bit_offset + number_bits <= 64);
 
-        data_u64 = *(uint64_t*)data_ptr;
+        data_u64 = *(uint64_t*)buffer;
         data_u64 <<= 64 - number_bits - bit_offset;
         data_int64 = (int64_t)((*(int64_t*)&data_u64) >> (64-number_bits));
       }
@@ -141,7 +141,7 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
     case sdt_ieee754_float_big_endian:
     case sdt_ieee754_float_little_endian:
       {
-        uint32_t data_u32 = *(uint32_t*)data_ptr;
+        uint32_t data_u32 = *(uint32_t*)buffer;
         data_ieee754 = *(float *)&data_u32;
         assert( number_bits = 32 && bit_offset == 0 );
       }
@@ -150,7 +150,7 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
     case sdt_ieee754_double_big_endian:
     case sdt_ieee754_double_little_endian:
       {
-        uint64_t data_u64 = *(uint64_t*)data_ptr;
+        uint64_t data_u64 = *(uint64_t*)buffer;
         data_ieee754 = *(double *)&data_u64;
         assert( number_bits = 64 && bit_offset == 0 );
       }
