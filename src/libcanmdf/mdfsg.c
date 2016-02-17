@@ -76,17 +76,17 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
       if(number_bytes == 1) 
       {
         data_int64 = ((*(uint8_t*)buffer) >> bit_offset);
-        data_int64 &= (1u << number_bits) - 1u;
+        data_int64 &= ((uint64_t)1 << number_bits) - 1;
       } 
       else if(number_bytes == 2) 
       {
         data_int64  = ((*(uint16_t*)buffer) >> bit_offset);
-        data_int64 &= (1u << number_bits) - 1u;
+        data_int64 &= ((uint64_t)1 << number_bits) - 1;
       } 
       else if(number_bytes == 4) 
       {
         data_int64  = ((*(uint32_t*)buffer) >> bit_offset);
-        data_int64 &= (1u << number_bits) - 1u;
+        data_int64 &= ((uint64_t)1 << number_bits) - 1;
       } 
       else {
         assert(bit_offset + number_bits <= 64);
