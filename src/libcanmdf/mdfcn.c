@@ -187,7 +187,4 @@ mdfProcessChannelsSorted(const mdf_t *const mdf,
     mdf_free(timeValue);
   }
 }
-  if(timeValue != NULL) {
-    mdf_free(timeValue);
-  }
-}
+
