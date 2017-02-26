@@ -1,7 +1,7 @@
 # configuration cantools                        -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-# Copyright (C) 2007-2013 Andreas Heitmann
+# Copyright (C) 2007-2016 Andreas Heitmann
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,15 +18,16 @@
 
 
 AC_PREREQ(2.69)
-AC_INIT(cantools, 0.13, andreas.heitmann@gmail.com)
+AC_INIT(cantools, 0.20, andreas.heitmann@gmail.com)
 AC_CONFIG_SRCDIR([src/libcandbc/parser.y])
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE([subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 AC_LIBTOOL_WIN32_DLL
+AC_USE_SYSTEM_EXTENSIONS
 
 dnl common library version
-version_info='0:13:0'
+version_info='0:19:0'
 AC_SUBST(version_info)
 
 # Checks for programs.
@@ -47,6 +48,7 @@ AC_PROG_CPP
 AC_PROG_MKDIR_P
 LT_INIT
 AC_PROG_LN_S
+AC_PROG_RANLIB
 
 # Checks for functions
 AC_REPLACE_FUNCS([strtok_r])
@@ -64,10 +66,46 @@ extern char *strtok_r (char *s, const char *delim, char **save_ptr);
 #endif
 ])
 
+AC_REPLACE_FUNCS([strndup])
+AC_CHECK_DECLS([strndup],,,[#include <string.h>])
+if test $ac_cv_have_decl_strndup = no; then
+    HAVE_DECL_STRNDUP=0
+fi
+if test $ac_cv_func_strndup = yes; then
+    HAVE_STRNDUP=1
+else
+    HAVE_STRNDUP=0
+fi
+AH_BOTTOM([
+#if !HAVE_DECL_STRNDUP
+#include <stddef.h>
+extern char *strndup (const char *s, size_t n);
+#endif
+])
+
+# workaround for missing LINE_MAX definition
+AC_MSG_CHECKING(if LINE_MAX is defined)
+AC_EGREP_CPP(yes,
+[#include <limits.h>
+#ifdef LINE_MAX
+yes
+#endif
+], line_max_defined=yes, line_max_defined=no)
+AC_MSG_RESULT($line_max_defined)
+
+if test "$line_max_defined" = "no"; then
+   CFLAGS="$CFLAGS -DLINE_MAX=2048"
+fi
 
 # Checks for header files.
 AC_FUNC_ALLOCA
-AC_CHECK_HEADERS([fcntl.h inttypes.h libintl.h limits.h malloc.h stddef.h stdint.h stdlib.h string.h unistd.h endian.h])
+AC_FUNC_FSEEKO
+AC_FUNC_MALLOC
+AC_FUNC_REALLOC
+AC_FUNC_STRNLEN
+AC_FUNC_STRTOD
+AC_CHECK_HEADERS([fcntl.h inttypes.h libintl.h limits.h malloc.h stddef.h \
+                  stdint.h stdlib.h string.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_CHECK_HEADER_STDBOOL
@@ -83,49 +121,30 @@ AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT64_T
 AC_C_CONST
-	
 AC_C_BIGENDIAN
+
+# check availability of arithmetic right shift
+AC_DEFUN([AX_C_ARITHMETIC_RSHIFT], [
+  AC_CACHE_CHECK([whether right shift operation is arithmetic],
+                 [ax_cv_c_arithmetic_rshift],
+                 [AC_COMPILE_IFELSE([
+ 		 AC_LANG_SOURCE([[int dummy[((-1 >> 1) < 0) ? 1 : -1];]])
+			     ],
+                                    [ax_cv_c_arithmetic_rshift=yes],
+                                    [ax_cv_c_arithmetic_rshift=no])])
+  if test "x$ax_cv_c_arithmetic_rshift" = xyes; then
+    AC_DEFINE([HAVE_ARITHMETIC_RSHIFT], [1],
+              [Define to 1 if the right shift operation is arithmetic.])
+  fi
+])
+AX_C_ARITHMETIC_RSHIFT
 
 # Checks for libraries
 AC_CHECK_LIB([hdf5], [H5Fcreate], AC_SUBST([HDF5_LIB], [-lhdf5]), ,-lz)
 AC_CHECK_LIB([m], [floor], AC_SUBST([Z_LIB], [-lz]))
 AC_CHECK_LIB([z], [deflate])
 
-AC_SUBST(MATIO_LIB)
-matio=1
-AC_CHECK_HEADER(matio.h, [], [matio=0])
-AC_CHECK_LIB(matio, Mat_VarCreate, [matio=matio], [matio=0], -lhdf5 -lz)
-if test $matio == 0
-then
-	echo "Error! You need to install libmatio, hdf5, and first."
-        exit -1
-else
-	MATIO_LIB=-lmatio
-fi
-
 AM_WITH_DMALLOC
-
-AC_ARG_ENABLE(clg,
-[  --enable-clg            Enable CLG file format],
-[case "$enableval" in \
-	yes)  enable_clg=yes ;; \
-	no)   enable_clg=no;; \
-	*)    enable_clg=no;; \
-esac], [enable_clg=no])
-
-# pass option to Makefile.am
-AM_CONDITIONAL([ENABLE_CLG], [test "$enable_clg" = "yes"])
-
-# Check for CLG library
-if test $enable_clg = yes; then
-clg_available=1
-AC_CHECK_FILE([src/libcanclg/clgReader.h], [], [clg_available=0])
-if test $clg_available == 0
-then
-	echo "Error! CLG source not installed."
-        exit -1
-fi
-fi
 
 AC_ARG_ENABLE(efence,
 [  --enable-efence         Use electric fence (www.perens.com)],
@@ -144,6 +163,10 @@ fi
 # Configure check for unit testing
 #
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.0])
+PKG_CHECK_MODULES([GLIB],  [glib-2.0 >= 2.0])
+PKG_CHECK_MODULES([MATIO], [matio >= 1.5])
+PKG_CHECK_MODULES([ZLIB],  [zlib >= 1.2])
+#PKG_CHECK_MODULES([HDF5], [hdf5 >= 1.8])
  
 # Checks for library functions.
 #AC_FUNC_ERROR_AT_LINE
@@ -153,3 +176,4 @@ AC_CHECK_FUNCS([memset munmap strchr strdup strndup strpbrk strspn strstr strtol
 AC_CONFIG_FILES([Makefile tests/Makefile])
 AC_OUTPUT
 
+AM_WITH_DMALLOC

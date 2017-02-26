@@ -1,5 +1,5 @@
-/*  mdfmodel.h --  declarations for MDF model
-    Copyright (C) 2012, 2013 Andreas Heitmann
+/*  mdfmodel.c --  MDF model access functions
+    Copyright (C) 2012-2016 Andreas Heitmann
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -13,6 +13,10 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <string.h>
 #include "mdfmodel.h"
@@ -111,9 +115,15 @@ cc_block_get(const mdf_t *const mdf, const link_t lnk)
 char *
 cn_get_long_name(const mdf_t *const mdf, const cn_block_t *const cn_block)
 {
-  const char *asam_name = tx_block_get_text(mdf, cn_block->link_asam_mcd_name);
+  uint16_t version_number = id_block_get(mdf)->version_number;
+  const char *asam_name;
   char *name;
 
+  if(version_number >= 212) {
+    asam_name = tx_block_get_text(mdf, cn_block->link_asam_mcd_name);
+  } else {
+    asam_name = NULL;
+  }
   if(asam_name != NULL) {
     name = mdf_strdup(asam_name);
   } else {

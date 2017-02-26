@@ -1,5 +1,5 @@
 /*  parser.c --  parser for DBC files
-    Copyright (C) 2007-2009 Andreas Heitmann
+    Copyright (C) 2007-2016 Andreas Heitmann
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <ctype.h>
-#include <dbcModel.h>
 #include <math.h>
+#include "dbcmodel.h"
 
 /* Tell Bison how much stack space is needed. */
 #define YYMAXDEPTH 20000
@@ -210,10 +210,12 @@ void attribute_append(
       av->value_type = ad->value_type;
     } else if(   av->value_type == vt_float
               && ad->value_type == vt_integer) {
-      printf("%lf -> ", av->value.double_val);
+      printf("warning: converting double value "
+             "%lf to integer value ", av->value.double_val);
       av->value.int_val = (sint32)lrint(av->value.double_val);
-      printf("%d\n", av->value.int_val);
+      printf("%d ", av->value.int_val);
       av->value_type = ad->value_type;
+      printf("in attribute %s\n",name);
     } else if(   av->value_type == vt_integer
               && ad->value_type == vt_hex) {
       av->value.hex_val = (uint32)av->value.int_val;

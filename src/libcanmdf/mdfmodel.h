@@ -2,7 +2,7 @@
 #define INCLUDE_MDFMODEL_H
 
 /*  mdfmodel.h --  declarations for MDF model
-    Copyright (C) 2012,2013 Andreas Heitmann
+    Copyright (C) 2012-2016 Andreas Heitmann
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -51,10 +51,18 @@ typedef struct {
   uint16_t  byte_order;            /* 0 = little endian */
   uint16_t  floating_point_format; /* 0 = IEEE754 */
   uint16_t  version_number;
-  uint16_t  reserved1;
-  char_t    reserved2[2];
-  char_t    reserved3[30];
+  /* valid since version 3.30: */
+  uint16_t  code_page_number;
+  char_t    reserved1[2];
+  char_t    reserved2[26];
+  uint16_t  standard_flags;
+  uint16_t  custom_flags;
 } id_block_t;
+
+typedef enum {
+  id_block_standard_flags_update_of_record_counters_required = 1,
+  id_block_standard_flags_update_of_reduces_samples_counters_required = 2,
+} id_block_standard_flags_t;
 
 typedef struct {
   char_t    block_identifier[2];

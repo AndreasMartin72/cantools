@@ -1,14 +1,21 @@
 General Information
 ===================
 
-cantools is a set of command line tools for dealing with ASC, MDF, and
-DBC files from Vector-Informatik. The tools can be used to analyze and
-convert the data to other formats:
+cantools is a set of libraries and command line tools for handling
+ASC, BLF, CLG, VSB, MDF, and DBC files from Vector-Informatik and
+others. The tools can be used to analyze and convert the data to other
+formats:
 
 * dbcls lists the contents of a DBC file.
-* cantomat converts a .ASC, a .VSB, or a .CLG log file to a MATLAB .MAT file
-* mdftomat converts a .MDF log file to a MATLAB .MAT file
-* dbccopy copies a dbcfile (to test the parser and generator)
+* cantomat converts log files in ASC, BLF, CLG, VSB format to a MAT
+* file (MATLAB format)
+* mdftomat converts log files in MDF format to a MAT file (up to MDF
+  version 3.x) 
+
+Some tools are available for testing of converters:
+
+* matdump displays the content of a MAT file as ASCII text
+* dbccopy copies a DBC file
 
 The tools 'asctomat' and 'mdftomat' require the package matio, which
 needs to be compiled and installed first (see instructions below).
@@ -16,7 +23,8 @@ needs to be compiled and installed first (see instructions below).
 Shared libraries for parsing and accessing these files are also
 provided:
 
-* libcandbc, libcanasc, libcanmdf: parsing of DBC, ASC, MDF files
+* libcandbc, libcanasc, libcanblf, libcanclg, libcanvsb, libcanmdf for 
+  parsing of DBC, ASC, BLF, CLG, VSB, MDF files 
 
 
 Installation of hdf5
@@ -26,11 +34,11 @@ Prerequisites: zlib-devel, bison, flex, make, gcc
 matio can be built with libhdf5, here is how to:
 
 1) download:
-   wget 'http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.14.tar.bz2'
+   wget 'http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.16.tar.bz2'
 2) unpack:
-   tar tjf hdf5-1.8.14.tar.bz2
+   tar xjf hdf5-1.8.16.tar.bz2
 3) build:
-   cd hdf5-1.8.14
+   cd hdf5-1.8.16
    ./configure --with-zlib=/usr/include,/lib --prefix=/usr
    CFLAGS=-std=c99 make
    CFLAGS=-std=c99 make check
@@ -43,12 +51,12 @@ Installation of matio
 =====================
 Prerequisites: autotools, zlib-devel, make, gcc
 
-1) download matio-1.5.2.tar.gz:
-   wget 'http://downloads.sourceforge.net/matio/matio-1.5.2.tar.gz?use_mirror='
+1) download matio-1.5.8.tar.gz:
+   wget 'http://downloads.sourceforge.net/matio/matio-1.5.8.tar.gz?use_mirror=' -O matio-1.5.8.tar.gz
    or
-   curl -o matio-1.5.2.tar.gz -L 'http://downloads.sourceforge.net/matio/matio-1.5.2.tar.gz?use_mirror='
+   curl -o matio-1.5.8.tar.gz -L 'http://downloads.sourceforge.net/matio/matio-1.5.8.tar.gz?use_mirror='
 2) unpack:
-   tar xzf matio-1.5.2.tar.gz
+   tar xzf matio-1.5.8.tar.gz
 3) configure:
    cd matio-1.5.2
    CFLAGS=-DZ_PREFIX ./configure --with-zlib=/ --with-hdf5=/ --prefix=/usr
@@ -66,6 +74,11 @@ autoreconf -f -i
 ./configure
 make
 make install
+
+Execute Unit Test(s)
+====================
+     - run 'make check'
+     - all tests should PASS
 
 Debugging DBC parser
 ====================
@@ -107,3 +120,9 @@ Troubleshooting
     void *fp;               /**< File pointer for the MAT file */
    by
     FILE *fp;               /**< File pointer for the MAT file */
+
+5) Error message from make: "configure.ac:36: error: required file
+   './compile' not found" (or similar)
+   Reason: platform specific automake scripts are not provided by the
+   source distribution. 
+   Fix: run 'autoreconf -f -i'
