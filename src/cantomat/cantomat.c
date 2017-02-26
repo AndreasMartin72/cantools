@@ -1,5 +1,5 @@
 /*  cantomat -- convert CAN log files to MAT files
-    Copyright (C) 2007-2009,2013-2014 Andreas Heitmann
+    Copyright (C) 2007-2016 Andreas Heitmann
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,16 +22,14 @@
 #include <string.h>
 #include <stdlib.h>
 #include <getopt.h>
-#include "signalFormat.h"
+#include "signalformat.h"
 #include "measurement.h"
-#include "busAssignment.h"
-#include "matWrite.h"
-#include "ascReader.h"
-#include "vsbReader.h"
-
-#ifdef HAVE_CLGREADER_H
+#include "busassignment.h"
+#include "matwrite.h"
+#include "ascreader.h"
 #include "clgreader.h"
-#endif
+#include "blfreader.h"
+#include "vsbreader.h"
 
 int verbose_flag = 0;
 int debug_flag   = 0;
@@ -44,19 +42,19 @@ static void usage_error(void)
   exit(1);
 }
 
-static void help(void)
+static void
+help(void)
 {
   fprintf(stderr,
           "Usage: %s [OPTION] -d dbcfile\n"
-          "Convert CAN trace file to MAT file.\n"
+          "cantomat " VERSION ": Convert CAN trace file to MAT file.\n"
           "\n"
           "Options:\n"
           "  -b, --bus <busid>          specify bus for next database\n"
           "  -d, --dbc <dbcfile>        assign database to previously specified bus\n"
           "  -a, --asc <ascfile>        ASC input file\n"
-#ifdef HAVE_CLGREADER_H
+          "  -B, --blf <blffile>        BLF input file\n"
           "  -c, --clg <clgfile>        CLG input file\n"
-#endif
           "  -v, --vsb <vsbfile>        VSB input file\n"
           "  -m, --mat <matfile>        MAT output file\n"
           "  -f, --format <format>      signal name format\n"
@@ -73,7 +71,8 @@ static void help(void)
         program_name);
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
   char *inputFilename = NULL;
   int inputFiles = 0;
@@ -98,16 +97,15 @@ int main(int argc, char **argv)
       /* These options don't set a flag.
          We distinguish them by their indices. */
       {"asc",     required_argument, 0, 'a'},
+      {"blf",     required_argument, 0, 'B'},
       {"bus",     required_argument, 0, 'b'},
-#ifdef HAVE_CLGREADER_H
       {"clg",     required_argument, 0, 'c'},
-#endif
       {"dbc",     required_argument, 0, 'd'},
       {"format",  required_argument, 0, 'f'},
       {"mat",     required_argument, 0, 'm'},
       {"timeres", required_argument, 0, 't'},
       {"vsb",     required_argument, 0, 'v'},
-      {"help",    no_argument,       NULL, 'h'},
+      {"help",    no_argument,    NULL, 'h'},
       {0, 0, 0, 0}
     };
 
@@ -115,7 +113,7 @@ int main(int argc, char **argv)
     int option_index = 0;
     int c;
 
-    c = getopt_long (argc, argv, "a:b:c:d:f:m:t:v:",
+    c = getopt_long (argc, argv, "a:B:b:c:d:f:m:t:v:",
                      long_options, &option_index);
 
     /* Detect the end of the options. */
@@ -129,13 +127,16 @@ int main(int argc, char **argv)
       parserFunction =ascReader_processFile;
       inputFiles++;
       break;
-#ifdef HAVE_CLGREADER_H
+    case 'B':
+      inputFilename = optarg;
+      parserFunction =blfReader_processFile;
+      inputFiles++;
+      break;
     case 'c':
       inputFilename = optarg;
       parserFunction =clgReader_processFile;
       inputFiles++;
       break;
-#endif
     case 'b':
       bus = atoi(optarg);
       break;

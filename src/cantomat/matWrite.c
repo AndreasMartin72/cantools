@@ -15,6 +15,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "config.h"
+#include <stdlib.h>
 
 #if WITH_DMALLOC
 #include <dmalloc.h>
@@ -23,7 +24,7 @@
 #include <stdio.h>
 #include <matio.h>
 #include "measurement.h"
-#include "../hashtable/hashtable_itr.h"
+#include "hashtable_itr.h"
 
 /*
  * matWrite - write signals from measurement structure to MAT file

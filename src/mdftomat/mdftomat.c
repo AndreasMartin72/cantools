@@ -1,5 +1,5 @@
 /*  mdftomat -- convert MDF files to MAT files
-    Copyright (C) 2012, 2013 Andreas Heitmann
+    Copyright (C) 2012-2016 Andreas Heitmann
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include <assert.h>
 #include <matio.h>
 #include <getopt.h>
+#include <ctype.h>
 
 #include "mdftomat.h"
 #include "mdfcg.h"
@@ -159,7 +160,7 @@ static void help(const char *program_name)
 {
   fprintf(stderr,
           "Usage: %s [OPTIONS] <mdffile> <matfile>\n"
-          "Convert MDF file to MAT file.\n"
+          "mdftomat " VERSION ": Convert MDF file to MAT file.\n"
           "\n"
           "Options:\n"
           "  -f, --filter <filterfile>  filter signals\n"
@@ -228,6 +229,10 @@ mdfPrintHeaderInfo(const mdf_t *const mdf)
   FIELD_PRINT("Measurement  = ", hd_block->measurement_id);
   printf("Byte Order   = %s\n", 
 	 (id_block->byte_order==0)?"Little Endian":"Big Endian");
+  printf("Version      = %u\n", id_block->version_number);
+  FIELD_PRINT("File Id      = ", id_block->file_identifier);
+  FIELD_PRINT("Format Id    = ", id_block->format_identifier);
+  FIELD_PRINT("Program Id   = ", id_block->program_identifier);
 }
 
 static void
@@ -271,6 +276,7 @@ main(int argc, char **argv)
       /* These options set a flag. */
       {"verbose", no_argument,       &verbose_level,  1},
       {"debug",   no_argument,       &verbose_level,  2},
+      {"deep",    no_argument,       &verbose_level,  3},
       {"brief",   no_argument,       &verbose_level,  0},
       {"v5",      no_argument,       &mat_file_ver,   (int)MAT_FT_MAT5},
       {"v73",     no_argument,       &mat_file_ver,   (int)MAT_FT_MAT73},
