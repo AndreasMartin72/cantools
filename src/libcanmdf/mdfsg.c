@@ -73,7 +73,7 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
   double      data_ieee754;
   uint8_t     buffer[8];
 
-  const int sdt = cn_block->signal_data_type;
+  const signal_data_type_t sdt = (signal_data_type_t) cn_block->signal_data_type;
   const int cn_is_big_endian =     (sdt == sdt_unsigned_int_big_endian)
                                 || (sdt == sdt_signed_int_big_endian)
                                 || (sdt == sdt_ieee754_float_big_endian)
@@ -97,7 +97,8 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
           
 
   /* extract data */
-  switch(sdt) {
+  switch(sdt) 
+  {
     case sdt_unsigned_int_default:
     case sdt_unsigned_int_big_endian:
     case sdt_unsigned_int_little_endian:
@@ -211,7 +212,7 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
     switch(cc_block->conversion_type) {
       case 0: /* parametric, linear */
         {
-          double x = dataToDouble(sdt,data_int64,data_ieee754);
+          double x = dataToDouble(sdt, data_int64, data_ieee754);
           converted_double = x
             * cc_block->supplement.linear.p2
             + cc_block->supplement.linear.p1;
