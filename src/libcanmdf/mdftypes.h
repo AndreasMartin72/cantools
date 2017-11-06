@@ -29,7 +29,7 @@ typedef char           mdf_char32_t[32];
 typedef char           mdf_char36_t[36];
 typedef char           mdf_char80_t[80];
 typedef char           mdf_char128_t[128];
-typedef int32_t        link_t;
+typedef uint32_t       link_t;
 typedef uint16_t       mdf_bool_t;
 
 #endif
