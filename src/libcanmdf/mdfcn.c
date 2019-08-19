@@ -1,5 +1,5 @@
 /*  mdfcn.c -- process channel block
-    Copyright (C) 2012-2016 Andreas Heitmann
+    Copyright (C) 2012-2017 Andreas Heitmann
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -14,13 +14,12 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "config.h"
+#include "cantools_config.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <matio.h>
 
 #include "mdfcn.h"
 #include "mdfsg.h"
@@ -43,7 +42,7 @@ mdfProcessChannel(const mdf_t *const mdf,
   const size_t nbytes = sizeof(double)*cg_block->number_of_records;
 
   if(cg_block->number_of_records > 0) {
-    timeValue = (double *)mdf_malloc(
+    timeValue = (double *)malloc(
          2 * (size_t)cg_block->number_of_records * sizeof(double));
     memcpy(timeValue, time,  nbytes);
     memcpy(&timeValue[cg_block->number_of_records], value, nbytes);
@@ -56,7 +55,7 @@ mdfProcessChannel(const mdf_t *const mdf,
   ce_get_message_info(ce_block, &message, &can_id, &can_channel);
   
   if(mdf->verbose_level >= 2) {
-    mdf_printf("name=%s, records = %lu, ID=0x%lx, can_ch=%lu, message=%s\n",
+    printf("name=%s, records = %lu, ID=0x%lx, can_ch=%lu, message=%s\n",
            signal_name,
            (unsigned long)cg_block->number_of_records,
            (unsigned long)can_id, 
@@ -69,9 +68,8 @@ mdfProcessChannel(const mdf_t *const mdf,
               cn_block->channel_type, message, signal_name,
               timeValue, filter, cbData);
 
-  mdf_free(message);
-  mdf_free(signal_name);
-  mdf_free(timeValue);
+  free(signal_name);
+  free(timeValue);
 }
 
 void
@@ -106,7 +104,7 @@ mdfProcessChannelsSorted(const mdf_t *const mdf,
   }
 
   if(number_of_records > 0) {
-    timeValue = (double *)mdf_malloc(sizeof(double)*2*number_of_records);
+    timeValue = (double *)malloc(sizeof(double)*2*number_of_records);
   } else {
     timeValue = NULL;
   }
@@ -116,6 +114,8 @@ mdfProcessChannelsSorted(const mdf_t *const mdf,
    */
   if(number_of_records > 0) {
     for(i_channel_type = 1; i_channel_type >=0; i_channel_type --) {
+      /* 0: data, 1: time. Start with time to reuse it for signal data
+         of all channels of the channel group */ 
       for( cn_block = cn_block_get(mdf, link)                        , icn=0;
            cn_block;
            cn_block = cn_block_get(mdf, cn_block->link_next_cn_block), icn++) {
@@ -124,12 +124,8 @@ mdfProcessChannelsSorted(const mdf_t *const mdf,
         char* message;
         char *signal_name = cn_get_long_name(mdf, cn_block);
 
-        /* check channel type */
-        if(cn_block->channel_type != (uint32_t)i_channel_type) 
-        {
-          mdf_free( signal_name );
-          continue;
-        }
+        /* match channel type. start with time channel per outer loop */
+        if(cn_block->channel_type != (uint32_t)i_channel_type) continue;
 
         /* target array */
         targetArray = (i_channel_type == 1)
@@ -177,14 +173,12 @@ mdfProcessChannelsSorted(const mdf_t *const mdf,
                     filter,
                     cbData);
 
-        mdf_free(message);
-        mdf_free(signal_name);
+        free(message);
+        free(signal_name);
       }
     }
   }
-  
   if(timeValue != NULL) {
-    mdf_free(timeValue);
+    free(timeValue);
   }
 }
-

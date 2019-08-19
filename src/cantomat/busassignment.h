@@ -1,8 +1,8 @@
-#ifndef INCLUDE_MDFTOMAT_H
-#define INCLUDE_MDFTOMAT_H
+#ifndef INCLUDE_BUSASSIGNMENT
+#define INCLUDE_BUSASSIGNMENT
 
-/*  mdftomat -- convert MDF files to MAT files
-    Copyright (C) 2012-2017 Andreas Heitmann
+/*  busassignment.h -- declarations for busassignment
+    Copyright (C) 2016-2017 Andreas Heitmann
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,12 +19,23 @@
 
 #include "cantools_config.h"
 
-#include <matio.h>
+#include "messagehash.h"
 
-/* callback data for MATLAB output */
 typedef struct {
-  mat_t *mat;
-  enum matio_compression compress;
-} mdftomat_t;
+  int bus;
+  char *filename;
+  messageHash_t *messageHash;
+} busAssignmentEntry_t;
+
+typedef struct {
+  int n;
+  busAssignmentEntry_t *list; /* array of n busAssigmentEntry_t's */
+} busAssignment_t;
+
+busAssignment_t *busAssignment_create(void);
+void busAssignment_associate(busAssignment_t *busAssigment,
+                             int bus, char *filename);
+void busAssignment_free(busAssignment_t *busAssigment);
+int busAssignment_parseDBC(busAssignment_t *busAssignment);
 
 #endif

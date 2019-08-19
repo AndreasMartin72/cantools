@@ -1,5 +1,5 @@
 /*  blfapi.c -- API for BLF access
-    Copyright (C) 2016 Andreas Heitmann
+    Copyright (C) 2016-2017 Andreas Heitmann
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -14,9 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "cantools_config.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -163,9 +161,13 @@ blfFreeObject(BLFHANDLE h, VBLObjectHeaderBase* pBase)
 success_t
 blfSkipObject(BLFHANDLE h, VBLObjectHeaderBase* pBase)
 {
-  return   blfHandleIsInitialized(h)
+  success_t success = 
+           blfHandleIsInitialized(h)
         && (pBase != NULL)
         && (pBase->mObjectSize >= pBase->mHeaderSize)
-        && blfHandleSkip(h, pBase->mObjectSize - 16)
-        && h->mStatistics.mObjectsRead++;
+        && blfHandleSkip(h, pBase->mObjectSize - 16);
+  if(success) {
+    h->mStatistics.mObjectsRead++;
+  }
+  return success;
 }

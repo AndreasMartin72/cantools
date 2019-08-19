@@ -1,8 +1,8 @@
-#ifndef INCLUDE_DBCREADER_H
-#define INCLUDE_DBCREADER_H
+#ifndef INCLUDE_ASCREADER_H
+#define INCLUDE_ASCREADER_H
 
-/*  dbcreader.h --  declarations for libcandbc
-    Copyright (C) 2007-2016 Andreas Heitmann
+/*  ascreader.h --  declarations for ascreader
+    Copyright (C) 2007-2017 Andreas Heitmann
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,17 +17,21 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "dbcmodel.h"
+#include "cantools_config.h"
+
+#include <stdio.h>
+#include "dbctypes.h"
+#include <time.h>
+#include "measurement.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-dbc_t *dbc_read_file(char *filename);
+void ascReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData);
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif

@@ -1,3 +1,47 @@
+2019-06-20  Andreas Heitmann  <andreas.heitmann@gmail.com>
+
+	* libcanmdf: added channel number to mdf signal name to
+	  distinguish equally named signals on multiple channels
+
+2019-06-16  Andreas Heitmann  <andreas.heitmann@gmail.com>
+
+	* all: version 0.25. This is the first version which only appears
+	  on github. The sourceforge archive is no longer maintained.
+	* libcanmdf: corrected 1:1 conversion for float/double
+	  values. This bug showed as uninitialized/random time axis values
+	  in some MDF files (Thanks for reporting, zhuimengqq!)
+
+2017-08-21  Andreas Heitmann  <andreas.heitmann@gmail.com>
+
+	* all: released version 0.24
+	* all: using stdint.h for defining 8 bit signed integers instead
+          of char basic type due to its implementation defined signedness
+	(thanks, Rainer)
+	* all: cleanup of header files
+	* cantomat: added error message for failed dbc parsing
+
+2017-05-01  Andreas Heitmann  <andreas.heitmann@gmail.com>
+
+	* all: released version 0.23
+	* libcanmdf: fixed conversion of signed integer signals on hosts
+	  without arithmetic right shift
+	* matdump: new options to list all values of all or selected
+	  variables and to list all variable names
+	* libcanclg, libcanasc, libcanvsb, cantomat: duplicate closure of
+	  BLF input file, potentially leading to crash (Thanks, Andreas W!)
+
+2017-04-17  Andreas Heitmann  <andreas.heitmann@gmail.com>
+
+	* all: released version 0.22
+	* Makefile: fixed duplicate header file
+
+2017-04-17  Andreas Heitmann  <andreas.heitmann@gmail.com>
+
+	* all: fixed filenames for case-sensitive operating systems
+	* libcanblf: fixed crash on non-supported objects
+	* libcanblf: fixed premature abort of parsing
+	* libcanblf: fixed compiler warnings, missing data types
+
 2017-01-01  Andreas Heitmann  <andreas.heitmann@gmail.com>
 
 	* all: released version 0.20

@@ -1,5 +1,5 @@
 /*  mdfdg.c --  access MDF data groups
-    Copyright (C) 2012-2015 Andreas Heitmann
+    Copyright (C) 2012-2017 Andreas Heitmann
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "config.h"
+#include "cantools_config.h"
 
 #include <stdio.h>
 #include "mdfmodel.h"
@@ -35,7 +35,7 @@ mdfProcessDataGroups(const mdf_t *const mdf, const filter_t *const filter,
        dg_block;
        dg_block = dg_block_get(mdf, dg_block->link_next_dg_block), idg++) {
     if(mdf->verbose_level >= 2) {
-      mdf_printf("DGBLOCK %d, nCG = %hu, nRec = %hu, offset=0x%lx\n",
+      printf("DGBLOCK %d, nCG = %hu, nRec = %hu, offset=0x%lx\n",
              idg,
              (unsigned short)dg_block->number_channel_groups,
              (unsigned short)dg_block->number_record_ids,
@@ -57,7 +57,7 @@ mdfProcessDataGroups(const mdf_t *const mdf, const filter_t *const filter,
                                       mdfSignalCb, cbData);
       break;
     default:
-      mdf_fprintf(stderr,"number_record_ids %hu not implemented\n",
+      fprintf(stderr,"number_record_ids %hu not implemented\n",
               (unsigned short)dg_block->number_record_ids);
       exit(EXIT_FAILURE);
     }

@@ -1,8 +1,8 @@
-#ifndef INCLUDE_ASCREAD_H
-#define INCLUDE_ASCREAD_H
+#ifndef INCLUDE_SIGNALFORMAT_H
+#define INCLUDE_SIGNALFORMAT_H
 
-/*  ascReader.h --  declarations for ascReader
-    Copyright (C) 2007-2016 Andreas Heitmann
+/*  signalformat.h --  declarations for signalformat
+    Copyright (C) 2016-2017 Andreas Heitmann
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,21 +17,14 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
+#include "cantools_config.h"
 
-#include <stdio.h>
-#include "dbctypes.h"
-#include <time.h>
-#include "measurement.h"
+typedef enum {
+  signalFormat_Name     = 1<<1,
+  signalFormat_Message  = 1<<2,
+  signalFormat_Database = 1<<3,
+} signalFormat_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* ascRead function */
-void ascReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData);
-
-#ifdef __cplusplus
-}
-#endif
+char *signalFormat_stringAppend(const char *in, const char *app);
 
 #endif
