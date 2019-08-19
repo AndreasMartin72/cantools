@@ -1,5 +1,5 @@
 /*  blfparser.c --  parse BLF files
-    Copyright (C) 2016 Andreas Heitmann
+    Copyright (C) 2016-2017 Andreas Heitmann
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -14,9 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "cantools_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -126,20 +124,17 @@ blfStatisticsInit(VBLFileStatisticsEx *const s)
  * dest pointer is NULL
  */
 static success_t
-blfHandleReadOrSkip(BLFHANDLE h, unsigned char *dest,
-        unsigned long totalBytesToRead)
+blfHandleReadOrSkip(BLFHANDLE h, uint8_t *dest,
+        uint32_t totalBytesToRead)
 {
-  unsigned char *destPtr;
-  uint32_t alreadyRead;
+  uint8_t *destPtr = dest;
+  uint32_t alreadyRead = 0;
   uint32_t srcBytesLeft;
   size_t wantToRead;
   int addToDest;
   size_t actuallyRead;
-  int totalRead;
+  uint32_t totalRead = 0;
   VBLObjectHeaderBase pBase;
-  destPtr = dest;
-  alreadyRead = 0;
-  totalRead = 0;
   DualStream *const ds = &h->mDualStream;
 
   /* loop until all bytes are read or dual stream is empty */
@@ -175,7 +170,9 @@ blfHandleReadOrSkip(BLFHANDLE h, unsigned char *dest,
           addToDest = actuallyRead;
         }
       }
-      destPtr    += addToDest;
+      if(destPtr != NULL) {
+        destPtr    += addToDest;
+      }
       alreadyRead = addToDest + totalRead;
       totalRead  += addToDest;
     } else {
@@ -190,7 +187,7 @@ fail:
 
 /* read nBytes */
 success_t
-blfHandleRead(BLFHANDLE h, char fileOnlyBit, uint8_t *dest_ptr,
+blfHandleRead(BLFHANDLE h, uint8_t fileOnlyBit, uint8_t *dest_ptr,
         uint32_t nBytes)
 {
   DualStream *const ds = &h->mDualStream;
@@ -223,7 +220,7 @@ blfLOGGUncompress(VBLObjectHeaderBaseLOGG* hbaselogg,
 
     uncompressedData = (uint8_t *)malloc(hbaselogg->deflatebuffersize);
     if(uncompressedData == NULL) {
-      fprintf(stderr, "blfLOBJReadPayload: malloc failed\n", 0);
+      fprintf(stderr, "blfLOBJReadPayload: malloc failed\n");
       goto fail;
     }
     suc = blfMemUncompress(uncompressedData,
@@ -297,13 +294,15 @@ fail:
 void
 blfHeaderBaseDump(VBLObjectHeaderBase *b)
 {
-  iprintf("header.base.mSignature = %c%c%c%c\n",
+/*
+  printf("header.base.mSignature = %c%c%c%c\n",
       ((uint8_t *)&b->mSignature)[0],
       ((uint8_t *)&b->mSignature)[1],
       ((uint8_t *)&b->mSignature)[2],
       ((uint8_t *)&b->mSignature)[3]);
-  iprintf("header.base.mHeaderSize    = %d\n",b->mHeaderSize);
-  iprintf("header.base.mHeaderVersion = %d\n",b->mHeaderVersion);
+  printf("header.base.mHeaderSize    = %d\n",b->mHeaderSize);
+  printf("header.base.mHeaderVersion = %d\n",b->mHeaderVersion);
+*/
 }
 
 /* copy VBLObjectHeaderBase structure and change CAN message version, if requested */

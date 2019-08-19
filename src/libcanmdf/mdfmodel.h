@@ -2,7 +2,7 @@
 #define INCLUDE_MDFMODEL_H
 
 /*  mdfmodel.h --  declarations for MDF model
-    Copyright (C) 2012-2016 Andreas Heitmann
+    Copyright (C) 2012-2017 Andreas Heitmann
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -114,6 +114,7 @@ typedef struct {
   /* 018 */ uint16_t    number_channels;
   /* 020 */ uint16_t    record_size;
   /* 022 */ uint32_t    number_of_records        ATTRIBUTE_PACKED;
+  /* valid since version 3.30: */
   /* 026 */ link_t      sample_reduction_block   ATTRIBUTE_PACKED;
 } cg_block_t;
 
@@ -244,8 +245,11 @@ typedef struct {
   /* 194 */ real_t          value_min                ATTRIBUTE_PACKED;
   /* 202 */ real_t          value_max                ATTRIBUTE_PACKED;
   /* 210 */ real_t          sample_rate              ATTRIBUTE_PACKED;
+  /* valid since version 2.12: */
   /* 218 */ link_t          link_asam_mcd_name       ATTRIBUTE_PACKED;
+  /* valid since version 3.00: */
   /* 222 */ link_t          link_display_identifier  ATTRIBUTE_PACKED;
+  /* valid since version 3.00: */
   /* 226 */ uint16_t        additional_byte_offset;
 } cn_block_t;
 

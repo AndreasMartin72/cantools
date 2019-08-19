@@ -1,5 +1,5 @@
 /*  vsbReader.c --  parse VSB files
-    Copyright (C) 2014 Andreas Heitmann
+    Copyright (C) 2014-2017 Andreas Heitmann
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -14,14 +14,20 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#include "cantools_config.h"
+
+#ifdef HAVE_INTTYPES_H
+# include <inttypes.h>
+#endif
+#ifdef HAVE_STDINT_H
+# include <stdint.h>
 #endif
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+
 #include "vsbreader.h"
 
 /*
@@ -33,8 +39,7 @@
  */
 void vsbReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
 {
-  char busmap[256];
-  char buffer[100];
+  uint8_t busmap[256];
   char *cp;
   size_t ret;
   vsb_header_t header;
@@ -57,7 +62,7 @@ void vsbReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
      && (header.file_version != 0x0102)
      && (header.file_version != 0x0103)) {
     fprintf(stderr, "unexpected file version %x, aborting\n",
-	    header.file_version);
+            header.file_version);
   }
   printf("file version %x\n",header.file_version);
   
@@ -115,9 +120,12 @@ void vsbReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
     } while(i!=0);
     puts("");
   }
-  return;
+  goto done;
 
 read_error:
   fprintf(stderr,"error reading vsb file, aborting\n");
-  return;
+
+done:
+  /* close input file stream */
+  fclose(fp);
 }

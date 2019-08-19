@@ -1,5 +1,5 @@
 /*  mdfcn.c -- process channel block
-    Copyright (C) 2012-2016 Andreas Heitmann
+    Copyright (C) 2012-2017 Andreas Heitmann
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -14,13 +14,12 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#include "config.h"
+#include "cantools_config.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <matio.h>
 
 #include "mdfcn.h"
 #include "mdfsg.h"
@@ -116,6 +115,8 @@ mdfProcessChannelsSorted(const mdf_t *const mdf,
    */
   if(number_of_records > 0) {
     for(i_channel_type = 1; i_channel_type >=0; i_channel_type --) {
+      /* 0: data, 1: time. Start with time to reuse it for signal data
+         of all channels of the channel group */ 
       for( cn_block = cn_block_get(mdf, link)                        , icn=0;
            cn_block;
            cn_block = cn_block_get(mdf, cn_block->link_next_cn_block), icn++) {
@@ -124,7 +125,7 @@ mdfProcessChannelsSorted(const mdf_t *const mdf,
         char* message;
         char *signal_name = cn_get_long_name(mdf, cn_block);
 
-        /* check channel type */
+        /* match channel type. start with time channel per outer loop */
         if(cn_block->channel_type != (uint32_t)i_channel_type) 
         {
           mdf_free( signal_name );
@@ -156,8 +157,7 @@ mdfProcessChannelsSorted(const mdf_t *const mdf,
           data_int_ptr = &data[offset];
 
           /* convert and store value */
-          *targetArray = mdf_signal_convert(data_int_ptr, mdf, cn_block);
-          targetArray++;
+          *targetArray++ = mdf_signal_convert(data_int_ptr, mdf, cn_block);
 
           /* next data record */
           data += record_size;
@@ -182,6 +182,7 @@ mdfProcessChannelsSorted(const mdf_t *const mdf,
       }
     }
   }
+  
   if(timeValue != NULL) {
     mdf_free(timeValue);
   }

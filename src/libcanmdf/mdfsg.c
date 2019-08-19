@@ -1,5 +1,5 @@
-/*  mdfsg.c --  access MDF signal groups
-    Copyright (C) 2012-2015 Andreas Heitmann
+/*  mdfsg.c -- access MDF signal groups
+    Copyright (C) 2012-2017 Andreas Heitmann
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -14,14 +14,13 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "cantools_config.h"
 
 #include <stdio.h>
 #include <assert.h>
-//#include <endian.h>
-#include "mdfswap.h"
+#include <endian.h>
+/*#include <byteswap.h>*/
+/*#include "mdfswap.h"*/
 #include "mdfsg.h"
 #include "mdfmodel.h"
 
@@ -32,25 +31,25 @@ static double dataToDouble(signal_data_type_t sdt,
   double x;
   
   switch(sdt) {
-  case sdt_unsigned_int_default:
-  case sdt_unsigned_int_big_endian:
-  case sdt_string:
-    x = (double)(uint64_t)data_int64;
-    break;
-  case sdt_signed_int_default:
-  case sdt_signed_int_big_endian:
-    x = (double)data_int64;
-    break;
-  case sdt_ieee754_float_default:
-  case sdt_ieee754_float_big_endian:
-  case sdt_ieee754_float_little_endian:
-  case sdt_ieee754_double_default:
-  case sdt_ieee754_double_big_endian:
-  case sdt_ieee754_double_little_endian:
-    x = data_ieee754;
-    break;
-  default:
-    assert(1);
+    case sdt_unsigned_int_default:
+    case sdt_unsigned_int_big_endian:
+    case sdt_string:
+      x = (double)(uint64_t)data_int64;
+      break;
+    case sdt_signed_int_default:
+    case sdt_signed_int_big_endian:
+      x = (double)data_int64;
+      break;
+    case sdt_ieee754_float_default:
+    case sdt_ieee754_float_big_endian:
+    case sdt_ieee754_float_little_endian:
+    case sdt_ieee754_double_default:
+    case sdt_ieee754_double_big_endian:
+    case sdt_ieee754_double_little_endian:
+      x = data_ieee754;
+      break;
+    default:
+      assert(1);
   }
   return x;
 }
@@ -97,7 +96,16 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
           
 
   /* extract data */
-  switch(sdt) {
+  switch(sdt) 
+  {
+    case sdt_signed_int_default:
+    case sdt_signed_int_big_endian:
+    case sdt_signed_int_little_endian:
+      /*
+       *  NOTE: the MDF specification allows 1-bit signed ints. In this case,
+       *  unset bits are mapped to 0 and set bits are mapped to -1.
+       */
+      /* FALLTHROUGH (to decode signal) */
     case sdt_unsigned_int_default:
     case sdt_unsigned_int_big_endian:
     case sdt_unsigned_int_little_endian:
@@ -129,12 +137,7 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
     case sdt_signed_int_default:
     case sdt_signed_int_big_endian:
     case sdt_signed_int_little_endian:
-      /*
-       *  NOTE: the MDF specification allows 1-bit signed ints. In this case,
-       *  unset bits are mapped to 0 and set bits are mapped to -1.
-       */
-      /* FALLTHROUGH (to decode signal) */
-      //assert(number_bits >= 2);
+      assert(number_bits >= 2);
       if(number_bytes == 1) 
       {
         uint8_t data_u8;
@@ -169,12 +172,6 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
         data_u64 <<= 64 - number_bits - bit_offset;
         data_int64 = (int64_t)((*(int64_t*)&data_u64) >> (64-number_bits));
       }
-  	  /*
-	     * per ISO/IEC 9899:1999, section 6.5.7, the result of a right
-	     * shift operation with negative first operand is
-	     * implementation dependent.
-	     */
-      data_int64 |= ~(~(uint64_t)0 >> ((number_bytes<<3)-number_bits)); // ensure correct arithmetic right shift
       break;
     case sdt_ieee754_float_default:
     case sdt_ieee754_float_big_endian:
@@ -267,7 +264,7 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
         converted_double = (double)data_int64;
         break;
       case 65535: /* 65535 = 1:1 conversion formula (Int = Phys) */
-        converted_double = (double)data_int64;
+        converted_double = dataToDouble(sdt, data_int64, data_ieee754);
         break;
       default:
         converted_double = 0.0;
@@ -276,24 +273,7 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
         exit(EXIT_FAILURE);
     }
   } else {
-    switch(sdt) {
-      case sdt_unsigned_int_default:
-      case sdt_unsigned_int_big_endian:
-      case sdt_string:
-        converted_double = (double)(uint64_t)data_int64;
-        break;
-      case sdt_signed_int_default:
-      case sdt_signed_int_big_endian:
-        converted_double = (double)data_int64;
-        break;
-    case sdt_ieee754_float_default:
-    case sdt_ieee754_double_default:
-    case sdt_ieee754_float_big_endian:
-      converted_double = data_ieee754;
-      break;
-    default:
-      assert(1);
-    }
+    converted_double = dataToDouble(sdt, data_int64, data_ieee754);
   }
   return converted_double;
 }

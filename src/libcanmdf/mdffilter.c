@@ -1,5 +1,5 @@
 /*  mdffilter -- filter and transform signal names
-    Copyright (C) 2012,2013 Andreas Heitmann
+    Copyright (C) 2012-2017 Andreas Heitmann
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -14,13 +14,15 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
+#include "cantools_config.h"
+
 #include <stdio.h>
 #include <limits.h>
 #include <fnmatch.h>
 #include <stdlib.h>
 #include <string.h>
-#include "mdffilter.h"
 
+#include "mdffilter.h"
 
 // extern char *strdup(const char *);
 static int filter_test_channel(const mdf_t *const mdf,

@@ -1,5 +1,5 @@
 /*  clgreader.c --  parse CLG files
-    Copyright (C) 2014-2016 Andreas Heitmann
+    Copyright (C) 2014-2017 Andreas Heitmann
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -14,8 +14,13 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#include "cantools_config.h"
+
+#ifdef HAVE_INTTYPES_H
+# include <inttypes.h>
+#endif
+#ifdef HAVE_STDINT_H
+# include <stdint.h>
 #endif
 
 #include <stdio.h>
@@ -33,9 +38,7 @@
  */
 void clgReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
 {
-  char busmap[256];
-  char buffer[100];
-  char *cp;
+  uint8_t busmap[256];
   size_t ret;
   clg_header_t header;
   clg_message_t msg;
@@ -62,7 +65,7 @@ void clgReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
     channelshift = 29; /* 29-bit CAN */
   } else {
     fprintf(stderr, "unexpected bus type (%d, %d), aborting.\n",
-	    header.channel_type1, header.channel_type2 );
+            header.channel_type1, header.channel_type2 );
     return;
   }
 
@@ -125,9 +128,12 @@ void clgReader_processFile(FILE *fp, msgRxCb_t msgRxCb, void *cbData)
     /* invoke message receive callback function */
     msgRxCb(&message, cbData);
   } /* end message loop */
-  return;
+  goto done;
 
 read_error:
   fprintf(stderr,"error reading CLG file, aborting\n");
-  return;
+
+done:
+  /* close input file stream */
+  fclose(fp);
 }
