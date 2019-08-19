@@ -98,14 +98,6 @@ mdf_signal_convert(const uint8_t *const data_int_ptr,
   /* extract data */
   switch(sdt) 
   {
-    case sdt_signed_int_default:
-    case sdt_signed_int_big_endian:
-    case sdt_signed_int_little_endian:
-      /*
-       *  NOTE: the MDF specification allows 1-bit signed ints. In this case,
-       *  unset bits are mapped to 0 and set bits are mapped to -1.
-       */
-      /* FALLTHROUGH (to decode signal) */
     case sdt_unsigned_int_default:
     case sdt_unsigned_int_big_endian:
     case sdt_unsigned_int_little_endian:
